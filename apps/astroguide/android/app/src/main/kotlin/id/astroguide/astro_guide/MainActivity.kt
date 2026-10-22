@@ -1,0 +1,5 @@
+package id.astroguide.astro_guide
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

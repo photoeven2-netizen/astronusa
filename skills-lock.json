@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "antislop": {
+      "source": "miqdadbadjuber/anti-slop",
+      "sourceType": "github",
+      "skillPath": "skills/antislop/SKILL.md",
+      "computedHash": "55b6115f5bcfd328b5fc6ff7d0d5ac5951b26b4ace240e46026975696eee49e1"
+    },
+    "create-payment-credential": {
+      "source": "stripe/link-cli",
+      "sourceType": "github",
+      "skillPath": "skills/create-payment-credential/SKILL.md",
+      "computedHash": "61c63f42359fae6837f745c89fcc1b7864ad2f452fba2088f7c2b68476d3094f"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "106acf230014cbb43ca34e6410371321b56ca742f9ee0442e8ec05bf02eb0384"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "f74b0bf1be26220dd615523fc1c0562567f9c463d9e9b255d4031345ffb37cd3"
+    },
+    "react-senior-code-review": {
+      "source": "the-senior-dev/senior-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-senior-code-review/SKILL.md",
+      "computedHash": "fe58c17a44114b41ce58afe1c723ee7aa674679c6d4bc0387a5f41a9ee50b116"
+    },
+    "senior-frontend": {
+      "source": "alirezarezvani/claude-skills",
+      "sourceType": "github",
+      "skillPath": "engineering-team/skills/senior-frontend/SKILL.md",
+      "computedHash": "e106cfe8f4d644c3b4d8177abde66e34e0f3f83cae114038715fa7aa4a06d57d"
+    },
+    "senior-fullstack": {
+      "source": "alirezarezvani/claude-skills",
+      "sourceType": "github",
+      "skillPath": "engineering-team/skills/senior-fullstack/SKILL.md",
+      "computedHash": "644dfccf8486789f81dcb6123d50c352cc6bcf6c62d1da2da71f012a2d97d1a2"
+    }
+  }
+}
