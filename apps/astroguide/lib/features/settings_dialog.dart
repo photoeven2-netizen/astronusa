@@ -254,7 +254,8 @@ class AboutAstroNusaDialog extends StatelessWidget {
                   child: Text(
                     'AstroNusa menghargai privasi dan keamanan data Anda:\n\n'
                     '1. Penyimpanan Lokal: Data profil kelahiran (nama, tanggal, waktu, dan kota lahir) disimpan secara terenkripsi dan aman secara lokal di perangkat Anda menggunakan Secure Storage.\n\n'
-                    '2. Pemrosesan AI Coach: Saat Anda menggunakan fitur "Buat Bacaan AI Coach", parameter astrologi (zodiak dan numerologi) dikirimkan secara aman melalui API backend terenkripsi ke layanan Google Gemini AI semata-mata untuk menghasilkan analisis teks reflektif real-time tanpa menyimpan identitas mentah Anda.',
+                    '2. Pemrosesan AI Coach: Saat Anda menggunakan fitur "Buat Bacaan AI Coach", parameter astrologi (zodiak dan numerologi) dikirimkan secara aman melalui API backend terenkripsi ke layanan Google Gemini AI semata-mata untuk menghasilkan analisis teks reflektif real-time tanpa menyimpan identitas mentah Anda.\n\n'
+                    '🌐 Kebijakan Privasi Resmi Web:\nhttps://photoeven2-netizen.github.io/astronusa/',
                     style: TextStyle(color: AstroPalette.muted, fontSize: 12.5, height: 1.45),
                   ),
                 ),
@@ -272,7 +273,7 @@ class AboutAstroNusaDialog extends StatelessWidget {
                     'AstroNusa dikembangkan oleh Vraboo.\n\n'
                     '• Swiss Ephemeris (sweph): Perhitungan posisi benda langit dan astrologi presisi tinggi dilisensikan di bawah ketentuan AGPL-3.0 dari Astrodienst (www.astro.com).\n\n'
                     '• GeoNames Database: Data geolokasi, koordinat, dan daftar kabupaten/kota menggunakan data dari GeoNames di bawah lisensi Creative Commons Attribution 4.0 (CC BY 4.0).\n\n'
-                    '• Flutter & Pustaka Terbuka: Menggunakan framework Flutter dan pustaka open-source terkemuka lainnya.',
+                    '• Kode Sumber Terbuka (AGPL-3.0):\nhttps://github.com/photoeven2-netizen/astronusa',
                     style: TextStyle(color: AstroPalette.muted, fontSize: 12.5, height: 1.45),
                   ),
                 ),
