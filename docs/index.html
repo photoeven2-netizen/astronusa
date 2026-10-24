@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kebijakan Privasi - AstroNusa</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #151d30;
+      --gold: #dfb15b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --line: #22304d;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 32px 16px;
+    }
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(223, 177, 91, 0.15);
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+    h1 {
+      font-size: 28px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .date {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    h2 {
+      font-size: 18px;
+      color: var(--gold);
+      margin-top: 28px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    p, li {
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    .callout {
+      background: rgba(223, 177, 91, 0.08);
+      border-left: 4px solid var(--gold);
+      padding: 14px 16px;
+      border-radius: 0 8px 8px 0;
+      margin: 16px 0;
+      font-size: 14.5px;
+    }
+    footer {
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+      margin-top: 36px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer strong {
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">LEGAL & DATA SAFETY</div>
+      <h1>Kebijakan Privasi AstroNusa</h1>
+      <div class="date">Terakhir diperbarui: 24 Oktober 2026</div>
+    </header>
+
+    <div class="callout">
+      <strong>Komitmen Privasi:</strong> AstroNusa dirancang dengan filosofi <em>Privacy-First</em>. Kami tidak melacak, tidak menjual, dan tidak menyalahgunakan data pribadi pengguna.
+    </div>
+
+    <h2>1. Data yang Disimpan di Perangkat Anda (Lokal)</h2>
+    <p>Untuk menghitung peta kelahiran, Human Design, Weton/Primbon, dan numerologi, aplikasi menyimpan data berikut secara lokal di memori perangkat Anda:</p>
+    <ul>
+      <li><strong>Nama Panggilan/Nama Lengkap:</strong> Digunakan untuk perhitungan numerologi Pythagorean.</li>
+      <li><strong>Tanggal dan Waktu Kelahiran:</strong> Digunakan untuk menghitung posisi transit benda langit dan zodiak.</li>
+      <li><strong>Kota/Lokasi Kelahiran:</strong> Digunakan untuk memperoleh koordinat garis lintang dan bujur serta zona waktu (WIB, WITA, WIT).</li>
+    </ul>
+    <p>Seluruh data di atas disimpan secara <strong>terenkripsi</strong> menggunakan modul penyimpanan aman perangkat (<em>Android Keystore / Secure Storage</em>). Data ini tidak pernah diunggah ke server kami untuk disimpan.</p>
+
+    <h2>2. Pemrosesan Fitur AI Coach</h2>
+    <p>Saat Anda memilih untuk menggunakan fitur interaktif <strong>"AI Coach"</strong>, aplikasi akan mengirimkan data anonim yang telah diproses terlebih dahulu:</p>
+    <ul>
+      <li>Hanya ringkasan posisi astrologi (seperti tanda Matahari, Bulan, Ascendant) dan angka numerologi yang dikirimkan.</li>
+      <li><strong>Nama lengkap, tanggal lahir mentah, jam lahir, dan kota lahir TIDAK PERNAH dikirimkan</strong> ke server AI.</li>
+      <li>Teks pertanyaan lanjutan yang Anda ketik secara sukarela diteruskan ke backend proxy kami untuk diproses oleh Google Gemini API guna menghasilkan respons refleksi yang relevan.</li>
+      <li>Server kami tidak menyimpan riwayat percakapan atau data astrologi Anda setelah sesi bacaan selesai dikirimkan.</li>
+    </ul>
+
+    <h2>3. Izin Aplikasi (Permissions)</h2>
+    <p>Aplikasi AstroNusa hanya meminta izin minimal:</p>
+    <ul>
+      <li><strong>Akses Internet (<code>android.permission.INTERNET</code>):</strong> Digunakan semata-mata untuk menghubungi server AI Coach jika pengguna meminta bacaan online. Seluruh perhitungan bagan, Human Design, PDF, dan Primbon tetap berfungsi 100% secara offline tanpa internet.</li>
+    </ul>
+
+    <h2>4. Kontrol dan Penghapusan Data</h2>
+    <p>Anda memiliki kendali penuh atas data Anda:</p>
+    <ul>
+      <li>Anda dapat menghapus seluruh data profil yang tersimpan kapan saja melalui menu <strong>Pengaturan &gt; Hapus Profil</strong> di dalam aplikasi.</li>
+      <li>Menghapus aplikasi (uninstall) dari perangkat Android Anda akan menghapus seluruh data lokal secara permanen.</li>
+    </ul>
+
+    <h2>5. Lisensi Pustaka Pihak Ketiga</h2>
+    <p>Aplikasi ini menghormati hak cipta dan lisensi sumber terbuka:</p>
+    <ul>
+      <li><strong>Swiss Ephemeris (sweph):</strong> Digunakan di bawah lisensi GNU AGPL-3.0 dari Astrodienst AG.</li>
+      <li><strong>GeoNames:</strong> Basis data koordinat kota Indonesia digunakan di bawah lisensi Creative Commons Attribution 4.0 (CC BY 4.0).</li>
+    </ul>
+
+    <h2>6. Kontak Pengembang</h2>
+    <p>Jika Anda memiliki pertanyaan seputar kebijakan privasi ini atau penggunaan aplikasi AstroNusa, Anda dapat menghubungi kami melalui:</p>
+    <ul>
+      <li><strong>Email:</strong> support@vraboo.com</li>
+      <li><strong>Pengembang:</strong> Vraboo</li>
+    </ul>
+
+    <footer>
+      &copy; 2026 <strong>AstroNusa</strong> by Vraboo. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>

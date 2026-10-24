@@ -16,7 +16,7 @@ class SecureProfileRepository implements ProfileRepository {
   SecureProfileRepository({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
 
-  static const _profileKey = 'astroguide.birth-profile.v1';
+  static const _profileKey = 'astronusa.birth-profile.v1';
 
   final FlutterSecureStorage _storage;
 

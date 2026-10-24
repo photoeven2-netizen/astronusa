@@ -9,13 +9,18 @@ import 'core/profile_repository.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  const apiBaseUrl = String.fromEnvironment(
+    'ASTRONUSA_API_BASE_URL',
+    defaultValue: 'http://127.0.0.1:3000',
+  );
+
   runApp(
-    AstroGuideApp(
+    AstroNusaApp(
       profileRepository: SecureProfileRepository(),
       cityCatalog: CityCatalog.load(),
       chartService: BirthChartCalculator(),
       coachService: AstroCoachClient(
-        baseUrl: const String.fromEnvironment('ASTROGUIDE_API_BASE_URL'),
+        baseUrl: apiBaseUrl,
       ),
     ),
   );

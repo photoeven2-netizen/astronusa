@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'core/app_localizations.dart';
 import 'core/astro_chart.dart';
+import 'core/astro_logo.dart';
 import 'core/astro_coach_client.dart';
 import 'core/birth_profile.dart';
 import 'core/city_catalog.dart';
@@ -10,8 +12,8 @@ import 'features/dashboard_screen.dart';
 import 'features/onboarding_screen.dart';
 import 'theme/app_theme.dart';
 
-class AstroGuideApp extends StatefulWidget {
-  const AstroGuideApp({
+class AstroNusaApp extends StatefulWidget {
+  const AstroNusaApp({
     required this.profileRepository,
     required this.cityCatalog,
     required this.chartService,
@@ -25,12 +27,22 @@ class AstroGuideApp extends StatefulWidget {
   final CoachService coachService;
 
   @override
-  State<AstroGuideApp> createState() => _AstroGuideAppState();
+  State<AstroNusaApp> createState() => _AstroNusaAppState();
 }
 
-class _AstroGuideAppState extends State<AstroGuideApp> {
+class _AstroNusaAppState extends State<AstroNusaApp> {
   late Future<BirthProfile?> _profileFuture;
   bool _isEditing = false;
+  ThemeMode _themeMode = ThemeMode.dark;
+  Locale? _locale;
+
+  void _updateThemeMode(ThemeMode mode) {
+    setState(() => _themeMode = mode);
+  }
+
+  void _updateLocale(Locale? locale) {
+    setState(() => _locale = locale);
+  }
 
   @override
   void initState() {
@@ -40,12 +52,23 @@ class _AstroGuideAppState extends State<AstroGuideApp> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'AstroGuide',
+    title: 'AstroNusa',
     debugShowCheckedModeBanner: false,
-    theme: buildAstroTheme(),
-    locale: const Locale('id'),
-    supportedLocales: const [Locale('id')],
+    theme: buildAstroTheme(Brightness.light),
+    darkTheme: buildAstroTheme(Brightness.dark),
+    themeMode: _themeMode,
+    locale: _locale ?? const Locale('id'),
+    supportedLocales: const [
+      Locale('id'),
+      Locale('en'),
+      Locale('ms'),
+      Locale('ar'),
+      Locale('zh'),
+      Locale('ja'),
+      Locale('ko'),
+    ],
     localizationsDelegates: const [
+      AppLocalizationsDelegate(),
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
@@ -55,7 +78,7 @@ class _AstroGuideAppState extends State<AstroGuideApp> {
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const _StartupScreen(
-            title: 'Menyiapkan AstroGuide',
+            title: 'Menyiapkan AstroNusa',
             message: 'Membuka profil yang tersimpan di ponselmu.',
             showProgress: true,
           );
@@ -77,9 +100,9 @@ class _AstroGuideAppState extends State<AstroGuideApp> {
             builder: (context, citySnapshot) {
               if (citySnapshot.connectionState != ConnectionState.done) {
                 return const _StartupScreen(
-                  title: 'Menyiapkan AstroGuide',
+                  title: 'Menyiapkan AstroNusa',
                   message:
-                      'Memuat daftar kota Indonesia untuk pencarian offline.',
+                      'Memuat daftar kota Indonesia & Dunia untuk pencarian offline.',
                   showProgress: true,
                 );
               }
@@ -97,6 +120,10 @@ class _AstroGuideAppState extends State<AstroGuideApp> {
                 cityCatalog: citySnapshot.data!,
                 initialProfile: profile,
                 onSave: _saveProfile,
+                currentThemeMode: _themeMode,
+                currentLocale: _locale,
+                onThemeModeChanged: _updateThemeMode,
+                onLocaleChanged: _updateLocale,
               );
             },
           );
@@ -105,9 +132,14 @@ class _AstroGuideAppState extends State<AstroGuideApp> {
         return DashboardScreen(
           key: ValueKey(profile),
           profile: profile,
+          cityCatalogFuture: widget.cityCatalog,
           chartService: widget.chartService,
           coachService: widget.coachService,
           onEditProfile: () => setState(() => _isEditing = true),
+          currentThemeMode: _themeMode,
+          currentLocale: _locale,
+          onThemeModeChanged: _updateThemeMode,
+          onLocaleChanged: _updateLocale,
         );
       },
     ),
@@ -124,7 +156,7 @@ class _AstroGuideAppState extends State<AstroGuideApp> {
   }
 }
 
-class _StartupScreen extends StatelessWidget {
+class _StartupScreen extends StatefulWidget {
   const _StartupScreen({
     required this.title,
     required this.message,
@@ -138,41 +170,112 @@ class _StartupScreen extends StatelessWidget {
   final bool showProgress;
 
   @override
+  State<_StartupScreen> createState() => _StartupScreenState();
+}
+
+class _StartupScreenState extends State<_StartupScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.08).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (showProgress) ...[
-                const CircularProgressIndicator(),
-                const SizedBox(height: 20),
-              ],
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AstroPalette.parchment,
-                  fontFamily: 'serif',
-                  fontSize: 26,
+    body: Container(
+      decoration: const BoxDecoration(
+        gradient: AstroPalette.cosmicGradient,
+      ),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: const AstroLogoWidget(size: 76),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AstroPalette.muted),
-              ),
-              if (onRetry != null) ...[
-                const SizedBox(height: 18),
-                FilledButton(
-                  onPressed: onRetry,
-                  child: const Text('Coba lagi'),
+                const SizedBox(height: 28),
+                const Text(
+                  'AstroNusa',
+                  style: TextStyle(
+                    color: AstroPalette.gold,
+                    fontFamily: 'serif',
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
                 ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Menyelaraskan Peta Energi Nusantara & Semesta',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AstroPalette.muted,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 36),
+                if (widget.showProgress) ...[
+                  const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(AstroPalette.gold),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
+                Text(
+                  widget.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AstroPalette.parchment,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AstroPalette.muted, fontSize: 13),
+                ),
+                if (widget.onRetry != null) ...[
+                  const SizedBox(height: 22),
+                  ElevatedButton(
+                    onPressed: widget.onRetry,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AstroPalette.gold,
+                      foregroundColor: AstroPalette.ink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Coba lagi'),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

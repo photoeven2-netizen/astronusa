@@ -105,7 +105,7 @@ test('requires the Rising position to be absent when birth time is unknown', () 
 
 test('rejects unsupported ayanamshas, signs, and out-of-range degrees', () => {
   for (const change of [
-    (request) => { request.chart.ayanamsha = 'tropical'; },
+    (request) => { request.chart.ayanamsha = 'invalid_ayanamsha'; },
     (request) => { request.chart.positions.sun = 'Ophiuchus'; },
     (request) => { request.chart.positions.moon = 360; },
   ]) {

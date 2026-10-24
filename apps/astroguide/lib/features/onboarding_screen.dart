@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_localizations.dart';
+import '../core/astro_logo.dart';
 import '../core/birth_city.dart';
 import '../core/birth_profile.dart';
 import '../core/city_catalog.dart';
 import '../core/numerology.dart';
 import '../theme/app_theme.dart';
+import 'settings_dialog.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
     required this.cityCatalog,
     required this.onSave,
+    required this.currentThemeMode,
+    required this.currentLocale,
+    required this.onThemeModeChanged,
+    required this.onLocaleChanged,
     this.initialProfile,
     super.key,
   });
@@ -17,6 +24,10 @@ class OnboardingScreen extends StatefulWidget {
   final CityCatalog cityCatalog;
   final Future<void> Function(BirthProfile) onSave;
   final BirthProfile? initialProfile;
+  final ThemeMode currentThemeMode;
+  final Locale? currentLocale;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
+  final ValueChanged<Locale?> onLocaleChanged;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -30,7 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   DateTime? _birthDate;
   int? _birthTimeMinutes;
   bool _birthTimeUnknown = true;
-  Ayanamsha _ayanamsha = Ayanamsha.lahiri;
+  Ayanamsha _ayanamsha = Ayanamsha.tropical;
   bool _isSaving = false;
   String? _saveError;
 
@@ -43,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _birthDate = profile?.birthDate;
     _birthTimeMinutes = profile?.birthTimeMinutes;
     _birthTimeUnknown = profile?.birthTimeMinutes == null;
-    _ayanamsha = profile?.ayanamsha ?? Ayanamsha.lahiri;
+    _ayanamsha = profile?.ayanamsha ?? Ayanamsha.tropical;
     if (profile != null) {
       _selectedCity = BirthCity(
         id: 0,
@@ -66,289 +77,438 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final query = _cityController.text.trim();
     final suggestions = _selectedCity == null && query.length >= 2
         ? widget.cityCatalog.search(query)
         : const <BirthCity>[];
 
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final textColor = isLight ? const Color(0xFF1A122E) : AstroPalette.parchment;
+    final mutedColor = isLight ? const Color(0xFF5E6075) : AstroPalette.muted;
+
     return Scaffold(
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
-            children: [
-              _brandMark(),
-              const SizedBox(height: 32),
-              Text(
-                'Langitmu punya cerita',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AstroPalette.parchment,
-                  fontFamily: 'serif',
-                  fontSize: 34,
-                  height: 1.12,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Isi detail ini untuk melihat peta energi dan pola yang mungkin terasa dekat dengan dirimu.',
-                style: TextStyle(color: AstroPalette.muted, fontSize: 15),
-              ),
-              const SizedBox(height: 30),
-              TextFormField(
-                key: const ValueKey('full-name'),
-                controller: _nameController,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Nama lengkap',
-                  hintText: 'Nama yang biasa kamu pakai',
-                ),
-                validator: (value) {
-                  final name = value?.trim() ?? '';
-                  if (name.isEmpty) {
-                    return 'Tulis nama lengkapmu dulu.';
-                  }
-                  try {
-                    PythagoreanNumerology.calculate(name);
-                  } on ArgumentError {
-                    return 'Nama perlu memuat setidaknya satu huruf.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 18),
-              _fieldLabel('Tanggal lahir'),
-              OutlinedButton(
-                key: const ValueKey('birth-date'),
-                onPressed: _isSaving ? null : _chooseDate,
-                style: _choiceButtonStyle(),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calendar_month_outlined, size: 20),
-                    const SizedBox(width: 12),
-                    Text(
-                      _birthDate == null
-                          ? 'Pilih tanggal lahir'
-                          : _formatDate(_birthDate!),
-                    ),
+      backgroundColor: isLight ? const Color(0xFFFAF7F2) : AstroPalette.ink,
+      body: Container(
+        decoration: isLight
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFFFAF7F2),
+                    const Color(0xFFEFE8DA),
                   ],
                 ),
+              )
+            : const BoxDecoration(
+                gradient: AstroPalette.cosmicGradient,
               ),
-              if (_birthDate == null)
-                const Padding(
-                  padding: EdgeInsets.only(left: 12, top: 6),
-                  child: Text(
-                    'Tanggal lahir diperlukan untuk menghitung chart.',
-                    style: TextStyle(color: AstroPalette.muted, fontSize: 12),
+        child: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+              children: [
+                _brandMark(context),
+                const SizedBox(height: 28),
+                Text(
+                  t.translate('tagline'),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: textColor,
+                    fontFamily: 'serif',
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    height: 1.15,
                   ),
                 ),
-              const SizedBox(height: 18),
-              _fieldLabel('Jam lahir'),
-              CheckboxListTile(
-                key: const ValueKey('unknown-birth-time'),
-                value: _birthTimeUnknown,
-                onChanged: _isSaving
-                    ? null
-                    : (value) {
-                        setState(() {
-                          _birthTimeUnknown = value ?? true;
-                        });
-                      },
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                title: const Text(
-                  'Jam lahir tidak diketahui',
-                  style: TextStyle(color: AstroPalette.parchment, fontSize: 14),
+                const SizedBox(height: 10),
+                Text(
+                  t.translate('taglineSub'),
+                  style: TextStyle(color: mutedColor, fontSize: 14, height: 1.45),
                 ),
-              ),
-              if (!_birthTimeUnknown) ...[
-                OutlinedButton(
-                  key: const ValueKey('birth-time'),
-                  onPressed: _isSaving ? null : _chooseTime,
-                  style: _choiceButtonStyle(),
-                  child: Row(
+                const SizedBox(height: 24),
+
+                // Clay 3D Form Card
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: AstroPalette.clay3D(
+                    baseColor: isLight ? Colors.white : const Color(0xFF1E1436),
+                    isDark: !isLight,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.schedule_outlined, size: 20),
-                      const SizedBox(width: 12),
-                      Text(
-                        _birthTimeMinutes == null
-                            ? 'Pilih jam lahir'
-                            : _formatTime(_birthTimeMinutes!),
+                      // 1. Full Name Field
+                      _fieldLabel(t.translate('fullName'), Icons.person_outline, textColor),
+                      TextFormField(
+                        key: const ValueKey('full-name'),
+                        controller: _nameController,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        style: TextStyle(color: textColor, fontSize: 15),
+                        decoration: InputDecoration(
+                          hintText: t.translate('nameHint'),
+                          prefixIcon: const Icon(Icons.badge_outlined, color: AstroPalette.gold, size: 20),
+                          fillColor: isLight ? Colors.grey.shade100 : const Color(0xFF140C24),
+                        ),
+                        validator: (value) {
+                          final name = value?.trim() ?? '';
+                          if (name.isEmpty) {
+                            return 'Tulis nama lengkapmu dulu.';
+                          }
+                          try {
+                            PythagoreanNumerology.calculate(name);
+                          } on ArgumentError {
+                            return 'Nama perlu memuat setidaknya satu huruf.';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // 2. Birth Date Field
+                      _fieldLabel(t.translate('birthDate'), Icons.calendar_today_outlined, textColor),
+                      OutlinedButton.icon(
+                        key: const ValueKey('birth-date'),
+                        onPressed: _isSaving ? null : _chooseDate,
+                        style: _choiceButtonStyle(isLight),
+                        icon: const Icon(Icons.calendar_month_outlined, color: AstroPalette.gold, size: 20),
+                        label: Text(
+                          _birthDate == null
+                              ? t.translate('chooseDate')
+                              : _formatDate(_birthDate!),
+                          style: TextStyle(
+                            color: _birthDate == null ? mutedColor : textColor,
+                            fontSize: 15,
+                            fontWeight: _birthDate == null ? FontWeight.normal : FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (_birthDate == null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6, top: 6),
+                          child: Text(
+                            '• Tanggal lahir diperlukan untuk menghitung Weton & Human Design.',
+                            style: TextStyle(color: mutedColor, fontSize: 12),
+                          ),
+                        ),
+
+                      const SizedBox(height: 20),
+
+                      // 3. Birth Time Field & Toggle
+                      _fieldLabel(t.translate('birthTime'), Icons.access_time_outlined, textColor),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isLight ? Colors.grey.shade100 : const Color(0xFF140C24),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: isLight ? Colors.grey.shade300 : AstroPalette.line),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          child: SwitchListTile(
+                            key: const ValueKey('unknown-birth-time'),
+                            value: _birthTimeUnknown,
+                            activeThumbColor: AstroPalette.gold,
+                            activeTrackColor: AstroPalette.gold.withValues(alpha: 0.3),
+                            onChanged: _isSaving
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _birthTimeUnknown = value;
+                                    });
+                                  },
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                            title: Text(
+                              t.translate('unknownTime'),
+                              style: TextStyle(color: textColor, fontSize: 14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (!_birthTimeUnknown) ...[
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          key: const ValueKey('birth-time'),
+                          onPressed: _isSaving ? null : _chooseTime,
+                          style: _choiceButtonStyle(isLight),
+                          icon: const Icon(Icons.schedule_outlined, color: AstroPalette.gold, size: 20),
+                          label: Text(
+                            _birthTimeMinutes == null
+                                ? t.translate('chooseTime')
+                                : _formatTime(_birthTimeMinutes!),
+                            style: TextStyle(
+                              color: _birthTimeMinutes == null ? mutedColor : textColor,
+                              fontSize: 15,
+                              fontWeight: _birthTimeMinutes == null ? FontWeight.normal : FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (_birthTimeMinutes == null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 6, top: 6),
+                            child: Text(
+                              '• Pilih jam lahir yang tercatat di akta atau surat lahir.',
+                              style: TextStyle(color: mutedColor, fontSize: 12),
+                            ),
+                          ),
+                      ],
+
+                      const SizedBox(height: 20),
+
+                      // 4. Birth City Field
+                      _fieldLabel(t.translate('birthCityLabel'), Icons.location_on_outlined, textColor),
+                      TextFormField(
+                        key: const ValueKey('city-query'),
+                        controller: _cityController,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.search,
+                        style: TextStyle(color: textColor, fontSize: 15),
+                        decoration: InputDecoration(
+                          labelText: t.translate('birthCity'),
+                          hintText: t.translate('cityHint'),
+                          prefixIcon: const Icon(Icons.search_outlined, color: AstroPalette.gold, size: 20),
+                          fillColor: isLight ? Colors.grey.shade100 : const Color(0xFF140C24),
+                          suffixIcon: _selectedCity == null
+                              ? null
+                              : IconButton(
+                                  tooltip: 'Ganti kota',
+                                  onPressed: _clearCity,
+                                  icon: const Icon(Icons.close, color: AstroPalette.gold),
+                                ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCity = null;
+                            _saveError = null;
+                          });
+                        },
+                      ),
+                      if (suggestions.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isLight ? Colors.white : const Color(0xFF140C24),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AstroPalette.gold, width: 1.2),
+                            ),
+                            child: Column(
+                              children: suggestions
+                                  .map(
+                                    (city) => ListTile(
+                                      dense: true,
+                                      title: Text(
+                                        city.name,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        city.regionName.isNotEmpty
+                                            ? '${city.regionName}, ${city.countryName} • ${city.timeZoneLabel}'
+                                            : '${city.countryName} • ${city.timeZoneLabel}',
+                                        style: const TextStyle(color: AstroPalette.gold, fontSize: 12),
+                                      ),
+                                      onTap: () => _selectCity(city),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                        ),
+                      if (_selectedCity == null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6, top: 6),
+                          child: Text(
+                            '• Pilih kota dari daftar agar zona waktu & koordinat akurat.',
+                            style: TextStyle(color: mutedColor, fontSize: 12),
+                          ),
+                        ),
+
+                      const SizedBox(height: 20),
+
+                      // 5. System Zodiac Method
+                      _fieldLabel(t.translate('zodiacSystem'), Icons.stars_outlined, textColor),
+                      DropdownButtonFormField<Ayanamsha>(
+                        key: const ValueKey('ayanamsha'),
+                        initialValue: _ayanamsha,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.auto_awesome_outlined, color: AstroPalette.gold, size: 20),
+                          fillColor: isLight ? Colors.grey.shade100 : const Color(0xFF140C24),
+                        ),
+                        dropdownColor: isLight ? Colors.white : const Color(0xFF140C24),
+                        style: TextStyle(color: textColor, fontSize: 15),
+                        items: Ayanamsha.values
+                            .map(
+                              (method) => DropdownMenuItem(
+                                value: method,
+                                child: Text(method.label),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: _isSaving
+                            ? null
+                            : (method) {
+                                if (method != null) {
+                                  setState(() => _ayanamsha = method);
+                                }
+                              },
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      if (_saveError != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AstroPalette.danger.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AstroPalette.danger),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: AstroPalette.danger, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _saveError!,
+                                  style: const TextStyle(color: AstroPalette.danger, fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Main Submit Button
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: AstroPalette.goldGradient,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AstroPalette.gold.withValues(alpha: 0.4),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: _isSaving ? null : _saveProfile,
+                          icon: _isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AstroPalette.ink,
+                                  ),
+                                )
+                              : const Icon(Icons.auto_awesome, color: AstroPalette.ink, size: 20),
+                          label: Text(
+                            _isSaving ? 'Menghitung Chart...' : t.translate('seeChart'),
+                            style: const TextStyle(
+                              color: AstroPalette.ink,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(54),
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                if (_birthTimeMinutes == null)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 12, top: 6),
-                    child: Text(
-                      'Pilih jam yang tercatat, bukan perkiraan.',
-                      style: TextStyle(color: AstroPalette.muted, fontSize: 12),
+
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.lock_outline, color: AstroPalette.muted, size: 15),
+                    const SizedBox(width: 6),
+                    Text(
+                      t.translate('privacyNote'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: mutedColor, fontSize: 13),
                     ),
-                  ),
+                  ],
+                ),
               ],
-              const SizedBox(height: 18),
-              TextFormField(
-                key: const ValueKey('city-query'),
-                controller: _cityController,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  labelText: 'Kota lahir',
-                  hintText: 'Cari kota di Indonesia',
-                  suffixIcon: _selectedCity == null
-                      ? const Icon(Icons.search)
-                      : IconButton(
-                          tooltip: 'Ganti kota',
-                          onPressed: _clearCity,
-                          icon: const Icon(Icons.close),
-                        ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCity = null;
-                    _saveError = null;
-                  });
-                },
-              ),
-              if (suggestions.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AstroPalette.plum,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AstroPalette.line),
-                    ),
-                    child: Column(
-                      children: suggestions
-                          .map(
-                            (city) => ListTile(
-                              dense: true,
-                              title: Text(city.name),
-                              subtitle: Text(city.timeZone),
-                              onTap: () => _selectCity(city),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ),
-              if (_selectedCity == null)
-                const Padding(
-                  padding: EdgeInsets.only(left: 12, top: 6),
-                  child: Text(
-                    'Pilih kota dari daftar agar zona waktunya tepat.',
-                    style: TextStyle(color: AstroPalette.muted, fontSize: 12),
-                  ),
-                ),
-              const SizedBox(height: 18),
-              _fieldLabel('Metode zodiak sidereal'),
-              DropdownButtonFormField<Ayanamsha>(
-                key: const ValueKey('ayanamsha'),
-                initialValue: _ayanamsha,
-                decoration: const InputDecoration(),
-                dropdownColor: AstroPalette.plum,
-                items: Ayanamsha.values
-                    .map(
-                      (method) => DropdownMenuItem(
-                        value: method,
-                        child: Text(method.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: _isSaving
-                    ? null
-                    : (method) {
-                        if (method != null) {
-                          setState(() => _ayanamsha = method);
-                        }
-                      },
-              ),
-              const SizedBox(height: 26),
-              if (_saveError != null) ...[
-                Text(
-                  _saveError!,
-                  style: const TextStyle(color: AstroPalette.danger),
-                ),
-                const SizedBox(height: 12),
-              ],
-              FilledButton(
-                onPressed: _isSaving ? null : _saveProfile,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(54),
-                  backgroundColor: AstroPalette.gold,
-                  foregroundColor: AstroPalette.ink,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Lihat peta energiku'),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'Data lahir disimpan aman di ponsel.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AstroPalette.muted, fontSize: 13),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _brandMark() => Row(
+  Widget _brandMark(BuildContext context) => Row(
     children: [
-      Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: AstroPalette.gold),
-        ),
-        child: const Icon(
-          Icons.auto_awesome,
-          size: 17,
-          color: AstroPalette.gold,
+      const AstroLogoWidget(size: 40),
+      const SizedBox(width: 12),
+      Text(
+        AppLocalizations.of(context).translate('appName'),
+        style: TextStyle(
+          color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF1A122E) : AstroPalette.parchment,
+          fontFamily: 'serif',
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
         ),
       ),
-      const SizedBox(width: 10),
-      const Text(
-        'AstroGuide',
-        style: TextStyle(
-          color: AstroPalette.parchment,
-          fontFamily: 'serif',
-          fontSize: 20,
+      const Spacer(),
+      IconButton(
+        tooltip: 'Pengaturan',
+        onPressed: () => showDialog(
+          context: context,
+          builder: (_) => SettingsDialog(
+            currentThemeMode: widget.currentThemeMode,
+            currentLocale: widget.currentLocale,
+            onThemeModeChanged: widget.onThemeModeChanged,
+            onLocaleChanged: widget.onLocaleChanged,
+          ),
         ),
+        icon: const Icon(Icons.settings_outlined, color: AstroPalette.gold, size: 22),
       ),
     ],
   );
 
-  Widget _fieldLabel(String label) => Padding(
+  Widget _fieldLabel(String label, IconData icon, Color textColor) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      label,
-      style: const TextStyle(
-        color: AstroPalette.parchment,
-        fontWeight: FontWeight.w600,
-      ),
+    child: Row(
+      children: [
+        Icon(icon, color: AstroPalette.gold, size: 18),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ],
     ),
   );
 
-  ButtonStyle _choiceButtonStyle() => OutlinedButton.styleFrom(
+  ButtonStyle _choiceButtonStyle(bool isLight) => OutlinedButton.styleFrom(
     alignment: Alignment.centerLeft,
     minimumSize: const Size.fromHeight(52),
-    foregroundColor: AstroPalette.parchment,
-    side: const BorderSide(color: AstroPalette.line),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    foregroundColor: isLight ? const Color(0xFF1A122E) : AstroPalette.parchment,
+    backgroundColor: isLight ? Colors.grey.shade100 : const Color(0xFF140C24),
+    side: BorderSide(color: isLight ? Colors.grey.shade300 : AstroPalette.line),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
   );
 
   Future<void> _chooseDate() async {
@@ -390,7 +550,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _selectCity(BirthCity city) {
     setState(() {
       _selectedCity = city;
-      _cityController.text = city.name;
+      _cityController.text = city.regionName.isNotEmpty
+          ? '${city.name}, ${city.regionName}, ${city.countryName}'
+          : '${city.name}, ${city.countryName}';
       _saveError = null;
     });
     FocusScope.of(context).unfocus();

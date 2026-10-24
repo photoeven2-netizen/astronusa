@@ -1,12 +1,14 @@
 enum Ayanamsha {
+  tropical,
   lahiri,
   raman,
   kp;
 
   String get label => switch (this) {
-    Ayanamsha.lahiri => 'Lahiri',
-    Ayanamsha.raman => 'Raman',
-    Ayanamsha.kp => 'KP',
+    Ayanamsha.tropical => 'Tropikal (Zodiak Barat)',
+    Ayanamsha.lahiri => 'Sidereal Lahiri (Veda)',
+    Ayanamsha.raman => 'Sidereal Raman (Veda)',
+    Ayanamsha.kp => 'Sidereal KP (Veda)',
   };
 
   String get apiValue => name;

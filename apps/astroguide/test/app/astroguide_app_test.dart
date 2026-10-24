@@ -79,7 +79,7 @@ CityCatalog _cityCatalog() => CityCatalog.fromRecords([
   },
 ]);
 
-Widget _app({BirthProfile? profile}) => AstroGuideApp(
+Widget _app({BirthProfile? profile}) => AstroNusaApp(
   profileRepository: _MemoryProfileRepository(profile),
   cityCatalog: Future.value(_cityCatalog()),
   chartService: _FakeChartService(),
@@ -119,7 +119,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Belum cukup data untuk memastikan'), findsOneWidget);
-      expect(find.text('Buat bacaan AstroGuide'), findsOneWidget);
+      expect(find.text('Buat bacaan AstroNusa'), findsOneWidget);
     },
   );
 
@@ -128,9 +128,13 @@ void main() {
   ) async {
     await tester.pumpWidget(_app(profile: _profile));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -650));
+    await tester.scrollUntilVisible(
+      find.text('Buat bacaan AstroNusa'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Buat bacaan AstroGuide'));
+    await tester.tap(find.text('Buat bacaan AstroNusa'));
     await tester.pumpAndSettle();
 
     expect(find.text('✨ PROFILE ENERGI UTAMAMU ✨'), findsOneWidget);

@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sweph/sweph.dart';
 
 import 'astro_chart.dart';
@@ -38,7 +39,9 @@ class BirthChartCalculator implements ChartService {
             profile,
           )
         : start;
-    _setAyanamsha(profile.ayanamsha);
+    if (profile.ayanamsha != Ayanamsha.tropical) {
+      _setAyanamsha(profile.ayanamsha);
+    }
 
     final positions = {
       'sun': _stablePosition(profile, start, end, HeavenlyBody.SE_SUN),
@@ -50,9 +53,12 @@ class BirthChartCalculator implements ChartService {
     String? rising;
     if (profile.birthTimeMinutes != null) {
       final julianDay = _julianDay(start);
+      final flag = profile.ayanamsha == Ayanamsha.tropical
+          ? SwephFlag.SEFLG_SWIEPH
+          : (SwephFlag.SEFLG_SWIEPH | SwephFlag.SEFLG_SIDEREAL);
       final houses = Sweph.swe_houses_ex2(
         julianDay,
-        SwephFlag.SEFLG_SIDEREAL,
+        flag,
         profile.latitude,
         profile.longitude,
         Hsys.P,
@@ -72,14 +78,30 @@ class BirthChartCalculator implements ChartService {
     );
   }
 
-  Future<void> _initialize() => Sweph.init(
-    epheAssets: const [
-      'packages/sweph/assets/ephe/sepl_18.se1',
-      'packages/sweph/assets/ephe/semo_18.se1',
-      'packages/sweph/assets/ephe/seas_18.se1',
-    ],
-    assetLoader: _RootBundleAssetLoader(_bundle),
-  );
+  Future<void> _initialize() async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final ephePath = '${tempDir.path}/ephe_files';
+      await Sweph.init(
+        epheFilesPath: ephePath,
+        epheAssets: const [
+          'packages/sweph/assets/ephe/sepl_18.se1',
+          'packages/sweph/assets/ephe/semo_18.se1',
+          'packages/sweph/assets/ephe/seas_18.se1',
+        ],
+        assetLoader: _RootBundleAssetLoader(_bundle),
+      );
+    } catch (_) {
+      await Sweph.init(
+        epheAssets: const [
+          'packages/sweph/assets/ephe/sepl_18.se1',
+          'packages/sweph/assets/ephe/semo_18.se1',
+          'packages/sweph/assets/ephe/seas_18.se1',
+        ],
+        assetLoader: _RootBundleAssetLoader(_bundle),
+      );
+    }
+  }
 
   DateTime _birthInstant(
     DateTime localDate,
@@ -99,7 +121,9 @@ class BirthChartCalculator implements ChartService {
     DateTime end,
     HeavenlyBody body,
   ) {
-    final flags = SwephFlag.SEFLG_SWIEPH | SwephFlag.SEFLG_SIDEREAL;
+    final flags = profile.ayanamsha == Ayanamsha.tropical
+        ? SwephFlag.SEFLG_SWIEPH
+        : (SwephFlag.SEFLG_SWIEPH | SwephFlag.SEFLG_SIDEREAL);
     final startPosition = Sweph.swe_calc_ut(_julianDay(start), body, flags);
     final startSign = ZodiacPosition.fromSiderealLongitude(
       _normalize(startPosition.longitude),
@@ -118,6 +142,7 @@ class BirthChartCalculator implements ChartService {
 
   void _setAyanamsha(Ayanamsha ayanamsha) {
     final mode = switch (ayanamsha) {
+      Ayanamsha.tropical => SiderealMode.SE_SIDM_LAHIRI,
       Ayanamsha.lahiri => SiderealMode.SE_SIDM_LAHIRI,
       Ayanamsha.raman => SiderealMode.SE_SIDM_RAMAN,
       Ayanamsha.kp => SiderealMode.SE_SIDM_KRISHNAMURTI,

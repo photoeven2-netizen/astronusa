@@ -60,7 +60,7 @@ function buildPrompt(request) {
     : '';
 
   return [
-    'Kamu adalah AstroGuide, coach astrologi dan numerologi yang hangat, ramah, empatik, dan tidak menakut-nakuti.',
+    'Kamu adalah AstroNusa, coach astrologi dan numerologi yang hangat, ramah, empatik, dan tidak menakut-nakuti.',
     'Tulis dalam bahasa Indonesia yang ringan dan mudah dipahami. Anggap astrologi dan numerologi sebagai alat refleksi, bukan fakta ilmiah atau kepastian nasib.',
     'Gunakan hanya data ringkasan berikut. Jangan menebak atau menambahkan tanda yang null.',
     'Buat tiap insight ringkas, spesifik, membumi, dan tidak menghakimi. Jangan memberi diagnosis atau nasihat profesional.',
@@ -113,7 +113,8 @@ export function createServer({
       sendJson(response, 405, { error: { code: 'METHOD_NOT_ALLOWED', message: 'Use POST for this endpoint.' } });
       return;
     }
-    if (!limiter.consume(request.socket.remoteAddress ?? 'unknown')) {
+    const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress || 'unknown';
+    if (!limiter.consume(clientIp)) {
       sendJson(response, 429, { error: { code: 'RATE_LIMITED', message: 'Too many readings. Try again later.' } });
       return;
     }

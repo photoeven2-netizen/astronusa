@@ -13,7 +13,7 @@ const SIGNS = new Set([
   'Pisces',
 ]);
 
-const AYANAMSHAS = new Set(['lahiri', 'raman', 'kp']);
+const AYANAMSHAS = new Set(['tropical', 'lahiri', 'raman', 'kp']);
 const POSITION_NAMES = ['sun', 'moon', 'rising', 'mars', 'venus'];
 const NUMEROLOGY_NAMES = ['expression', 'soulUrge', 'personality'];
 const NUMEROLOGY_VALUES = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33]);

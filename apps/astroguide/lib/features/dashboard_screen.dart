@@ -1,24 +1,38 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_localizations.dart';
 import '../core/astro_chart.dart';
+import '../core/astro_logo.dart';
 import '../core/astro_coach_client.dart';
 import '../core/birth_profile.dart';
+import '../core/city_catalog.dart';
 import '../core/numerology.dart';
 import '../theme/app_theme.dart';
+import 'settings_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
     required this.profile,
+    required this.cityCatalogFuture,
     required this.chartService,
     required this.coachService,
     required this.onEditProfile,
+    this.currentThemeMode = ThemeMode.dark,
+    this.currentLocale,
+    this.onThemeModeChanged,
+    this.onLocaleChanged,
     super.key,
   });
 
   final BirthProfile profile;
+  final Future<CityCatalog> cityCatalogFuture;
   final ChartService chartService;
   final CoachService coachService;
   final VoidCallback onEditProfile;
+  final ThemeMode currentThemeMode;
+  final Locale? currentLocale;
+  final ValueChanged<ThemeMode>? onThemeModeChanged;
+  final ValueChanged<Locale?>? onLocaleChanged;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -86,17 +100,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _topBar() => Row(
     children: [
-      const Icon(Icons.auto_awesome, color: AstroPalette.gold, size: 22),
-      const SizedBox(width: 9),
+      const AstroLogoWidget(size: 34),
+      const SizedBox(width: 10),
       const Text(
-        'AstroGuide',
+        'AstroNusa',
         style: TextStyle(
           color: AstroPalette.parchment,
           fontFamily: 'serif',
           fontSize: 20,
+          fontWeight: FontWeight.bold,
         ),
       ),
       const Spacer(),
+      IconButton(
+        tooltip: 'Pengaturan',
+        onPressed: () => showDialog(
+          context: context,
+          builder: (_) => SettingsDialog(
+            currentThemeMode: Theme.of(context).brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+            currentLocale: Localizations.localeOf(context),
+            onThemeModeChanged: (mode) {},
+            onLocaleChanged: (locale) {},
+          ),
+        ),
+        icon: const Icon(Icons.settings_outlined, color: AstroPalette.gold, size: 20),
+      ),
       TextButton.icon(
         onPressed: widget.onEditProfile,
         icon: const Icon(Icons.tune, size: 18),
@@ -125,6 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   );
 
   Widget _chartContent(AstroChart chart) {
+    final t = AppLocalizations.of(context);
     final numbers = PythagoreanNumerology.calculate(widget.profile.fullName);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 )
               : const Icon(Icons.auto_awesome, size: 19),
           label: Text(
-            _reading == null ? 'Buat bacaan AstroGuide' : 'Buat bacaan baru',
+            _reading == null ? t.translate('makeReading') : t.translate('makeNewReading'),
           ),
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(54),

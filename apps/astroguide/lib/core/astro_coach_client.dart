@@ -1,6 +1,5 @@
-import 'dart:async';
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'astro_chart.dart';
@@ -16,13 +15,13 @@ abstract interface class CoachService {
 
 class CoachException implements Exception {
   const CoachException(this.message);
-
   final String message;
 
   @override
   String toString() => message;
 }
 
+@immutable
 class AstroReading {
   const AstroReading({
     required this.opening,
@@ -102,13 +101,13 @@ class AstroReading {
     }
 
     return AstroReading(
-      opening: requiredText('opening', 400),
-      nameInsight: requiredText('nameInsight', 800),
-      sunInsight: optionalText('sunInsight', 800),
-      moonInsight: optionalText('moonInsight', 800),
-      risingInsight: optionalText('risingInsight', 800),
-      careerLoveInsight: optionalText('careerLoveInsight', 800),
-      advice: requiredText('advice', 800),
+      opening: requiredText('opening', 2000),
+      nameInsight: requiredText('nameInsight', 2000),
+      sunInsight: optionalText('sunInsight', 2000),
+      moonInsight: optionalText('moonInsight', 2000),
+      risingInsight: optionalText('risingInsight', 2000),
+      careerLoveInsight: optionalText('careerLoveInsight', 2000),
+      advice: requiredText('advice', 2000),
       questions: List<String>.unmodifiable(questionsValue.cast<String>()),
     );
   }
@@ -118,12 +117,49 @@ class AstroCoachClient implements CoachService {
   AstroCoachClient({
     required this.baseUrl,
     http.Client? client,
-    this.timeout = const Duration(seconds: 25),
+    this.timeout = const Duration(seconds: 15),
   }) : _client = client ?? http.Client();
 
   final String baseUrl;
   final Duration timeout;
   final http.Client _client;
+
+  String _messageForStatus(int statusCode) {
+    switch (statusCode) {
+      case 429:
+        return 'Terlalu banyak permintaan (Rate limit). Coba beberapa saat lagi.';
+      case 503:
+        return 'Coach AI belum dikonfigurasi oleh pengelola server.';
+      case 500:
+      case 502:
+      case 504:
+        return 'Server AI mengalami gangguan. Coba beberapa saat lagi.';
+      default:
+        return 'Gagal menghubungi server AI (Kode error: $statusCode).';
+    }
+  }
+
+  Uri _endpointFor(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) {
+      throw const CoachException(
+        'Coach AI belum dikonfigurasi. Tambahkan alamat API saat menyiapkan server.',
+      );
+    }
+    final parsed = Uri.tryParse(trimmed);
+    if (parsed == null || !parsed.hasScheme) {
+      throw const CoachException('Alamat server AI tidak valid.');
+    }
+    if (parsed.scheme == 'http' &&
+        parsed.host != '127.0.0.1' &&
+        parsed.host != 'localhost' &&
+        parsed.host != '10.0.2.2') {
+      throw const CoachException(
+        'Alamat server HTTP tidak aman (harus HTTPS atau localhost).',
+      );
+    }
+    return parsed.resolve('/v1/readings');
+  }
 
   @override
   Future<AstroReading> read({
@@ -131,117 +167,50 @@ class AstroCoachClient implements CoachService {
     required NumerologyNumbers numerology,
     String? question,
   }) async {
-    final endpoint = _endpoint();
     if (question != null && question.length > 1000) {
       throw const CoachException(
         'Pertanyaan terlalu panjang. Batasi hingga 1.000 karakter.',
       );
     }
-    final body = <String, Object?>{
-      'chart': chart.toReadingJson(),
-      'numerology': {
-        'expression': numerology.expression,
-        'soulUrge': numerology.soulUrge,
-        'personality': numerology.personality,
-      },
-      if (question != null && question.trim().isNotEmpty)
-        'question': question.trim(),
-    };
 
-    late final http.Response response;
+    final endpoint = _endpointFor(baseUrl);
+
     try {
-      response = await _client
+      final body = <String, Object?>{
+        'chart': chart.toReadingJson(),
+        'numerology': {
+          'expression': numerology.expression,
+          'soulUrge': numerology.soulUrge,
+          'personality': numerology.personality,
+        },
+        if (question != null && question.trim().isNotEmpty)
+          'question': question.trim(),
+      };
+
+      final response = await _client
           .post(
             endpoint,
             headers: const {'content-type': 'application/json'},
             body: jsonEncode(body),
           )
           .timeout(timeout);
-    } on TimeoutException {
-      throw const CoachException(
-        'Coach AI terlalu lama merespons. Coba lagi sebentar.',
-      );
-    } on http.ClientException {
-      throw const CoachException(
-        'Server coach belum bisa dijangkau. Periksa alamat server dan koneksi internet.',
-      );
-    }
 
-    if (response.statusCode != 200) {
-      throw CoachException(_messageForStatus(response.statusCode));
-    }
-
-    late final Object? decoded;
-    try {
-      decoded = jsonDecode(response.body);
-    } on FormatException {
-      throw const CoachException(
-        'Server mengirim bacaan dengan format yang tidak dikenal.',
-      );
-    }
-    if (decoded is! Map<String, dynamic>) {
-      throw const CoachException(
-        'Server mengirim bacaan dengan format yang tidak dikenal.',
-      );
-    }
-
-    try {
-      final reading = AstroReading.fromJson(Map<String, Object?>.from(decoded));
-      if ((chart.sun == null) != (reading.sunInsight == null) ||
-          (chart.moon == null) != (reading.moonInsight == null) ||
-          (chart.rising == null) != (reading.risingInsight == null) ||
-          ((chart.mars != null || chart.venus != null) !=
-              (reading.careerLoveInsight != null))) {
-        throw const FormatException(
-          'The coach guessed an unavailable chart placement.',
-        );
+      if (response.statusCode != 200) {
+        throw CoachException(_messageForStatus(response.statusCode));
       }
-      return reading;
-    } on FormatException {
-      throw const CoachException(
-        'Bacaan dari server belum lengkap. Coba buat bacaan baru.',
-      );
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Respon server tidak valid.');
+      }
+
+      return AstroReading.fromJson(Map<String, Object?>.from(decoded));
+    } on CoachException {
+      rethrow;
+    } catch (_) {
+      throw const CoachException('Gagal terhubung ke server AI. Periksa koneksi internet Anda.');
     }
   }
 
   void close() => _client.close();
-
-  Uri _endpoint() {
-    if (baseUrl.trim().isEmpty) {
-      throw const CoachException(
-        'Coach AI belum dikonfigurasi. Tambahkan alamat API saat menyiapkan server.',
-      );
-    }
-
-    final uri = Uri.tryParse(baseUrl.trim());
-    if (uri == null ||
-        !uri.hasAuthority ||
-        uri.host.isEmpty ||
-        uri.userInfo.isNotEmpty ||
-        uri.query.isNotEmpty ||
-        uri.fragment.isNotEmpty ||
-        !_isSecureOrLocal(uri)) {
-      throw const CoachException(
-        'Alamat server coach tidak aman atau tidak valid.',
-      );
-    }
-
-    return uri.resolve('/v1/readings');
-  }
-
-  bool _isSecureOrLocal(Uri uri) {
-    if (uri.scheme == 'https') {
-      return true;
-    }
-    return uri.scheme == 'http' &&
-        const {'localhost', '127.0.0.1', '10.0.2.2', '::1'}.contains(uri.host);
-  }
-
-  String _messageForStatus(int statusCode) => switch (statusCode) {
-    400 => 'Data bacaan tidak dapat diproses. Periksa profil dan coba lagi.',
-    429 => 'Kamu sudah meminta banyak bacaan. Tunggu sebentar lalu coba lagi.',
-    503 => 'Coach AI belum dikonfigurasi oleh pengelola server.',
-    >= 500 => 'Server coach sedang bermasalah. Coba lagi nanti.',
-    _ => 'Server menolak permintaan bacaan. Periksa pengaturan server.',
-  };
 }

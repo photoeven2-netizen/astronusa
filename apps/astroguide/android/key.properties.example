@@ -1,0 +1,8 @@
+# Format konfigurasi penandatanganan rilis Android (Release Keystore)
+# Salin file ini menjadi 'key.properties' di folder yang sama (android/key.properties)
+# JANGAN pernah meng-commit file 'key.properties' atau file '*.jks' ke repositori publik!
+
+storePassword=your_keystore_password
+keyPassword=your_key_password
+keyAlias=upload
+storeFile=../upload-keystore.jks
